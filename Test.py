@@ -97,7 +97,7 @@ class TestTempotron(unittest.TestCase):
         tempotron1 = Tempotron(0, 15, 15/4, np.array([2, -1]))
         spike_times = np.array([[np.log(2)*15, 100], [np.log(3)*15, 101]])
 
-        self.assertAlmostEqual(tempotron1.compute_tmax(spike_times), 16.43259988)
+        self.assertAlmostEqual(tempotron1.compute_tmax(spike_times), 16.47918433)
 
 
 if __name__ == '__main__':

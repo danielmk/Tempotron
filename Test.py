@@ -42,7 +42,8 @@ class TestTempotron(unittest.TestCase):
         for non empty spike_times
         """
         self.tempotron.efficacies = np.random.random(10)
-        spike_times = np.array([[0], [0], [0], [], [], [], [], [], [], []])
+        spike_times = np.array([[0], [0], [0], [], [], [], [], [], [], []],
+                               dtype=object)
         potential = self.tempotron.compute_membrane_potential(4.62, spike_times)
         potential_man = self.tempotron.efficacies[0:3].sum()
         self.assertAlmostEqual(potential, potential_man)
@@ -52,7 +53,7 @@ class TestTempotron(unittest.TestCase):
         Test 1 for tempotron.compute_spike_contributions
         Every neuron spikes once at a different time
         """
-        spike_times = np.array([[0], [10], [20], [30], [40]])
+        spike_times = np.array([[0], [10], [20], [30], [40]], dtype=object)
         spike_contribs = self.tempotron.compute_spike_contributions(40, spike_times)
         spike_contribs_correct = np.array([0.03877, 0.1054, 0.2857, 0.7399, 0.0])
         self.assertTrue(np.allclose(spike_contribs, spike_contribs_correct, atol=1e-4))
@@ -62,7 +63,7 @@ class TestTempotron(unittest.TestCase):
         Test 2 for tempotron.compute_spike_contributions
         One neuron spikes twice
         """
-        spike_times = np.array([[0, 10], [], [], [], []])
+        spike_times = np.array([[0, 10], [], [], [], []], dtype=object)
         spike_contribs = self.tempotron.compute_spike_contributions(20, spike_times)
         spike_contribs_correct = np.array([1.025596, 0.0, 0.0, 0.0, 0.0])
         self.assertTrue(np.allclose(spike_contribs, spike_contribs_correct, atol=1e-4))
@@ -95,7 +96,7 @@ class TestTempotron(unittest.TestCase):
         Boundary case with non-existing derivative
         """
         tempotron1 = Tempotron(0, 15, 15/4, np.array([2, -1]))
-        spike_times = np.array([[np.log(2)*15, 100], [np.log(3)*15, 101]])
+        spike_times = np.array([[np.log(2)*15, 100], [np.log(3)*15, 101]], dtype=object)
 
         self.assertAlmostEqual(tempotron1.compute_tmax(spike_times), 16.47918433)
 

@@ -94,7 +94,7 @@ class Tempotron:
         for t_n < t
         """
         # sort spikes in chronological order
-        spikes_chron = [(time, synapse) for synapse in xrange(len(spike_times)) for time in spike_times[synapse]]
+        spikes_chron = [(time, synapse) for synapse in range(len(spike_times)) for time in spike_times[synapse]]
         spikes_chron.sort()
 
         # Make a list of spike times and their corresponding weights
@@ -121,7 +121,7 @@ class Tempotron:
         # loop over spike times to compute the contributions
         # of individual spikes
         spike_contribs = np.zeros(N_synapse)
-        for neuron_pos in xrange(N_synapse):
+        for neuron_pos in range(N_synapse):
             for spike_time in spike_times[neuron_pos]:
                 # print self.K(self.V_rest, t, spike_time)
                 spike_contribs[neuron_pos] += self.K(self.V_norm, t, spike_time)
@@ -139,7 +139,7 @@ class Tempotron:
         """
         # Run until maximum number of steps is reached or
         # no weight updates occur anymore
-        for i in xrange(steps):
+        for i in range(steps):
             # go through io-pairs in random order
             for spike_times, target in np.random.permutation(io_pairs):
                 self.adapt_weights(spike_times, target, learning_rate)
@@ -253,7 +253,7 @@ class Tempotron:
         """
 
         # sort spikes in chronological order
-        spikes_chron = [(time, synapse) for synapse in xrange(len(spike_times)) for time in spike_times[synapse]]
+        spikes_chron = [(time, synapse) for synapse in range(len(spike_times)) for time in spike_times[synapse]]
         spikes_chron.sort()
 
         # Make a list of spike times and their corresponding weights
@@ -345,7 +345,7 @@ class Tempotron:
 if __name__ == '__main__':
     np.random.seed(0)
     efficacies = 1.8 * np.random.random(10) - 0.50
-    print 'synaptic efficacies:', efficacies, '\n'
+    print('synaptic efficacies:', efficacies, '\n')
 
     tempotron = Tempotron(0, 10, 2.5, efficacies)
     # efficacies = np.array([0.8, 0.8, 0.8, 0.8, 0.8])
@@ -357,7 +357,7 @@ if __name__ == '__main__':
     tempotron.plot_membrane_potential(0, 500, spike_times2)
 
     tempotron.train([(spike_times1, True), (spike_times2, False)], 300, learning_rate=10e-3)
-    print tempotron.efficacies
+    print(tempotron.efficacies)
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
     tempotron.plot_membrane_potential(0, 500, spike_times2)
     plt.show()

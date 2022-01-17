@@ -42,8 +42,7 @@ class Tempotron:
         """
         tmax = (tau * tau_s * np.log(tau/tau_s)) / (tau - tau_s)
         v_max = self.K(1, tmax, 0)
-        V_0 = 1/v_max
-        return V_0
+        return 1/v_max
 
     def K(self, V_0, t, t_i):
         """
@@ -51,11 +50,12 @@ class Tempotron:
 
         K(t-t_i) = V_0 (exp(-(t-t_i)/tau) - exp(-(t-t_i)/tau_s)
         """
-        if t < t_i:
-            value = 0
-        else:
-            value = V_0 * (np.exp(-(t-t_i)/self.tau) - np.exp(-(t-t_i)/self.tau_s))
-        return value
+        return (
+            0
+            if t < t_i
+            else V_0
+            * (np.exp(-(t - t_i) / self.tau) - np.exp(-(t - t_i) / self.tau_s))
+        )
 
     def compute_membrane_potential(self, t, spike_times):
         """
@@ -78,10 +78,7 @@ class Tempotron:
         # multiply with the synaptic efficacies
         total_incoming = spike_contribs * self.efficacies
 
-        # add sum and add V_rest to get membrane potential
-        V = total_incoming.sum() + self.V_rest
-        
-        return V
+        return total_incoming.sum() + self.V_rest
 
     def compute_derivative(self, t, spike_times):
         """
@@ -108,9 +105,7 @@ class Tempotron:
         factor_tau = np.exp(-t/self.tau)/self.tau
         factor_tau_s = np.exp(-t/self.tau_s)/self.tau_s
 
-        deriv = self.V_norm * (factor_tau_s*sum_tau_s - factor_tau*sum_tau)
-
-        return deriv
+        return self.V_norm * (factor_tau_s*sum_tau_s - factor_tau*sum_tau)
 
     def compute_spike_contributions(self, t, spike_times):
         """
@@ -139,7 +134,7 @@ class Tempotron:
         """
         # Run until maximum number of steps is reached or
         # no weight updates occur anymore
-        for i in xrange(steps):
+        for _ in xrange(steps):
             # go through io-pairs in random order
             for spike_times, target in np.random.permutation(io_pairs):
                 self.adapt_weights(spike_times, target, learning_rate)
@@ -277,9 +272,7 @@ class Tempotron:
 
         vmax_list = np.array([self.compute_membrane_potential(t, spike_times) for t in tmax_list])
 
-        tmax = tmax_list[vmax_list.argmax()]
-        
-        return tmax
+        return tmax_list[vmax_list.argmax()]
 
     def adapt_weights(self, spike_times, target, learning_rate):
         """
@@ -336,10 +329,7 @@ class Tempotron:
         # time tmax
         spike_contribs = self.compute_spike_contributions(tmax, spike_times)
 
-        # multiply with learning rate to get updates
-        update = learning_rate * spike_contribs
-
-        return update
+        return learning_rate * spike_contribs
 
         
 if __name__ == '__main__':

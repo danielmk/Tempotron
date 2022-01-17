@@ -15,7 +15,6 @@ class TestTempotron(unittest.TestCase):
     def setUp(self):
         # Change synaptic efficacies later!!
         self.tempotron = Tempotron(0, 10, 2.5, np.ones(10))
-        pass
 
     def test_normalisation_tempotron(self):
         """
@@ -44,7 +43,7 @@ class TestTempotron(unittest.TestCase):
         self.tempotron.efficacies = np.random.random(10)
         spike_times = np.array([[0], [0], [0], [], [], [], [], [], [], []])
         potential = self.tempotron.compute_membrane_potential(4.62, spike_times)
-        potential_man = self.tempotron.efficacies[0:3].sum()
+        potential_man = self.tempotron.efficacies[:3].sum()
         self.assertAlmostEqual(potential, potential_man)
 
     def test_spike_contributions1(self):

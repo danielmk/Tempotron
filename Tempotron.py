@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pdb
 
 
 class Tempotron:
@@ -341,6 +342,17 @@ class Tempotron:
 
         return update
 
+    def accuracy(self, io_pairs):
+        """Return the percentage of accurately classified io_pairs"""
+        accurate = 0
+        for spike_times, target in np.random.permutation(io_pairs):
+            tmax = self.compute_tmax(spike_times)
+            vmax = self.compute_membrane_potential(tmax, spike_times)
+            output = vmax > self.threshold
+            if output == target:
+                accurate += 1
+
+        return (accurate / len(io_pairs)) * 100
         
 if __name__ == '__main__':
     np.random.seed(0)
@@ -348,16 +360,19 @@ if __name__ == '__main__':
     print('synaptic efficacies:', efficacies, '\n')
 
     tempotron = Tempotron(0, 10, 2.5, efficacies)
+
     # efficacies = np.array([0.8, 0.8, 0.8, 0.8, 0.8])
     spike_times1 = np.array([[70, 200, 400], [], [400, 420], [], [110], [230], [240, 260, 340], [380], [300], [105]])
     spike_times2 = np.array([[], [395], [50, 170], [], [70, 280], [], [290], [115], [250, 320], [225, 330]])
     spike_times = np.array([[0, 10], [], [3], [], [], [], [], [], [], []])
-
+    print("Pre-training accuracy: " + 
+          str(tempotron.accuracy([(spike_times1, True), (spike_times2, False)])))
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
-    tempotron.plot_membrane_potential(0, 500, spike_times2)
+    tempotron.plot_membrane_potential(0, 500, spike_times1)
 
     tempotron.train([(spike_times1, True), (spike_times2, False)], 300, learning_rate=10e-3)
-    print(tempotron.efficacies)
+    print("Post-training accuracy: " + 
+          str(tempotron.accuracy([(spike_times1, True), (spike_times2, False)])))
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
-    tempotron.plot_membrane_potential(0, 500, spike_times2)
+    tempotron.plot_membrane_potential(0, 500, spike_times1)
     plt.show()

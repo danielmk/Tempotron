@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 """Parameters"""
 seed = 0
 np.random.seed(seed)
-epochs = 100  # Number of learning epochs
+epochs = 200  # Number of learning epochs
 total_time = 2000.0  # Simulation time
 V_rest = 0.0  # Resting potential
 tau = 10.0  # 
@@ -38,12 +38,14 @@ all_spikes = spike_times1 + spike_times2
 
 print('synaptic efficacies:', efficacies, '\n')
 
-tempotron = Tempotron(V_rest, tau, tau_s, efficacies, threshold)
-
+tempotron = Tempotron(V_rest, tau, tau_s, efficacies, threshold, jit_mode=True)
+print("Pre-training accuracy: " + 
+      str(tempotron.accuracy(all_spikes)))
 tempotron.plot_membrane_potential(0, total_time, all_spikes[0][0])
 
 tempotron.train(all_spikes, epochs, learning_rate=learning_rate)
 print(tempotron.efficacies)
-
+print("Post-training accuracy: " + 
+      str(tempotron.accuracy(all_spikes)))
 tempotron.plot_membrane_potential(0, total_time, all_spikes[0][0])
 plt.show()

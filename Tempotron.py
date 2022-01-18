@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import pdb
 from numba import jit
 
+np.warnings.filterwarnings('error', category=np.VisibleDeprecationWarning)
+
 class Tempotron:
     """
     A class representing a tempotron, as described in
@@ -109,9 +111,9 @@ class Tempotron:
 
         # At time t we want to incorporate all the spikes for which
         # t_spike < t
-        sum_tau = np.array([spike[1]*np.exp(spike[0]/self.tau) for spike in spikes if spike[0] <= t]).sum()
-        sum_tau_s = np.array([spike[1]*np.exp(spike[0]/self.tau_s) for spike in spikes if spike[0] <= t]).sum()
-
+        sum_tau = np.array([spike[1]*np.exp(spike[0]/self.tau) for spike in spikes if spike[0] <= t], dtype=object).sum()
+        sum_tau_s = np.array([spike[1]*np.exp(spike[0]/self.tau_s) for spike in spikes if spike[0] <= t], dtype=object).sum()
+        pdb.set_trace()
         factor_tau = np.exp(-t/self.tau)/self.tau
         factor_tau_s = np.exp(-t/self.tau_s)/self.tau_s
 
@@ -146,6 +148,7 @@ class Tempotron:
         """
         # Run until maximum number of steps is reached or
         # no weight updates occur anymore
+
         for i in range(steps):
             # go through io-pairs in random order
             for spike_times, target in np.random.permutation(io_pairs):
@@ -267,7 +270,7 @@ class Tempotron:
         spikes = [(s[0], self.efficacies[s[1]]) for s in spikes_chron]
         times = np.array([spike[0] for spike in spikes])
         weights = np.array([spike[1] for spike in spikes])
-
+        
         sum_tau = (weights*np.exp(times/self.tau)).cumsum()
         sum_tau_s = (weights*np.exp(times/self.tau_s)).cumsum()
 
@@ -383,17 +386,17 @@ if __name__ == '__main__':
     tempotron = Tempotron(0, 10, 2.5, efficacies, jit_mode=True)
 
     # efficacies = np.array([0.8, 0.8, 0.8, 0.8, 0.8])
-    spike_times1 = np.array([[70, 200, 400], [], [400, 420], [], [110], [230], [240, 260, 340], [380], [300], [105]])
-    spike_times2 = np.array([[], [395], [50, 170], [], [70, 280], [], [290], [115], [250, 320], [225, 330]])
-    spike_times = np.array([[0, 10], [], [3], [], [], [], [], [], [], []])
+    spike_times1 = np.array([[70, 200, 400], [], [400, 420], [], [110], [230], [240, 260, 340], [380], [300], [105]], dtype=object)
+    spike_times2 = np.array([[], [395], [50, 170], [], [70, 280], [], [290], [115], [250, 320], [225, 330]], dtype=object)
+    spike_times = np.array([[0, 10], [], [3], [], [], [], [], [], [], []], dtype=object)
     print("Pre-training accuracy: " + 
-          str(tempotron.accuracy([(spike_times1, True), (spike_times2, False)])))
+          str(tempotron.accuracy(np.array([(spike_times1, True), (spike_times2, False)], dtype=object))))
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
     tempotron.plot_membrane_potential(0, 500, spike_times1)
 
-    tempotron.train([(spike_times1, True), (spike_times2, False)], 300, learning_rate=10e-3)
+    tempotron.train(np.array([(spike_times1, True), (spike_times2, False)], dtype=object), 300, learning_rate=10e-3)
     print("Post-training accuracy: " + 
-          str(tempotron.accuracy([(spike_times1, True), (spike_times2, False)])))
+          str(tempotron.accuracy(np.array([(spike_times1, True), (spike_times2, False)], dtype=object))))
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
     tempotron.plot_membrane_potential(0, 500, spike_times1)
     plt.show()

@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import pdb
 from numba import jit
 
-np.warnings.filterwarnings('error', category=np.VisibleDeprecationWarning)
 
 class Tempotron:
     """

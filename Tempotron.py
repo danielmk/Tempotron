@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pdb
-
+from numba import jit
 
 class Tempotron:
     """
@@ -15,7 +15,7 @@ class Tempotron:
     denoting the decay time constants of membrane integration
     and synaptic currents, respectively.
     """
-    def __init__(self, V_rest, tau, tau_s, synaptic_efficacies, threshold=1.0):
+    def __init__(self, V_rest, tau, tau_s, synaptic_efficacies, threshold=1.0, jit_mode=False):
         # set parameters as attributes
         self.V_rest = V_rest
         self.tau = float(tau)
@@ -24,6 +24,7 @@ class Tempotron:
         self.threshold = threshold
         self.efficacies = synaptic_efficacies
         self.t_spi = 10     # spike integration time, compute this with formula
+        self.jit_mode = jit_mode
 
         # compute normalisation factor V_0
         self.V_norm = self.compute_norm_factor(tau, tau_s)
@@ -42,7 +43,10 @@ class Tempotron:
         amplitudes are given by the synaptic efficacies.
         """
         tmax = (tau * tau_s * np.log(tau/tau_s)) / (tau - tau_s)
-        v_max = self.K(1, tmax, 0)
+        if self.jit_mode == True:
+            v_max = self.K_jit(1, tmax, 0, self.tau, self.tau_s)
+        else:
+            v_max = self.K(1, tmax, 0)
         V_0 = 1/v_max
         return V_0
 
@@ -52,6 +56,8 @@ class Tempotron:
 
         K(t-t_i) = V_0 (exp(-(t-t_i)/tau) - exp(-(t-t_i)/tau_s)
         """
+        if self.jit_mode:
+            return self.K_jit(V_0, t, t_i, self.tau, self.tau_s)
         if t < t_i:
             value = 0
         else:
@@ -353,13 +359,28 @@ class Tempotron:
                 accurate += 1
 
         return (accurate / len(io_pairs)) * 100
-        
+    @staticmethod
+    @jit(nopython=True)
+    def K_jit(V_0, t, t_i, tau, tau_s):
+        """
+        Compute the function
+
+        K(t-t_i) = V_0 (exp(-(t-t_i)/tau) - exp(-(t-t_i)/tau_s)
+        """
+        if t < t_i:
+            value = 0
+        else:
+            value = V_0 * (np.exp(-(t-t_i)/tau) - np.exp(-(t-t_i)/tau_s))
+        return value
+    
+    
+    
 if __name__ == '__main__':
     np.random.seed(0)
     efficacies = 1.8 * np.random.random(10) - 0.50
     print('synaptic efficacies:', efficacies, '\n')
 
-    tempotron = Tempotron(0, 10, 2.5, efficacies)
+    tempotron = Tempotron(0, 10, 2.5, efficacies, jit_mode=True)
 
     # efficacies = np.array([0.8, 0.8, 0.8, 0.8, 0.8])
     spike_times1 = np.array([[70, 200, 400], [], [400, 420], [], [110], [230], [240, 260, 340], [380], [300], [105]])

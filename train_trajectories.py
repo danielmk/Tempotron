@@ -14,15 +14,18 @@ import matplotlib.pyplot as plt
 """Parameters"""
 seed = 0
 np.random.seed(seed)
-epochs = 200  # Number of learning epochs
+epochs = 100  # Number of learning epochs
 total_time = 2000.0  # Simulation time
 V_rest = 0.0  # Resting potential
 tau = 10.0  # 
 tau_s = 2.5
-threshold = 3.0
-efficacies = 1.8 * np.random.random(10) - 0.50
+threshold = 24
 learning_rate = 1e-4
+n_cells = 200
+efficacies = 1.8 * np.random.random(n_cells) - 0.50
 
+trajectory_1 = '75'
+trajectory_2 = '60'
 
 """Load data"""
 dirname = os.path.dirname(__file__)
@@ -32,9 +35,9 @@ example_data = os.path.join(
 data = shelve.open(example_data)
 
 """Structure and label spike times"""
-spike_times1 = [(np.array(data['75']['grid_spikes'][x][:10], dtype=object), True) for x in data['75']['grid_spikes']]
-spike_times2 = [(np.array(data['60']['grid_spikes'][x][:10], dtype=object), False) for x in data['60']['grid_spikes']]
-all_spikes = spike_times1 + spike_times2
+spike_times1 = [(np.array(data[trajectory_1]['grid_spikes'][x][:n_cells], dtype=object), True) for x in data[trajectory_1]['grid_spikes']]
+spike_times2 = [(np.array(data[trajectory_2]['grid_spikes'][x][:n_cells], dtype=object), False) for x in data[trajectory_2]['grid_spikes']]
+all_spikes = np.array(spike_times1 + spike_times2, dtype=object)
 
 print('synaptic efficacies:', efficacies, '\n')
 

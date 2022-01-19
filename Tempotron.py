@@ -112,7 +112,7 @@ class Tempotron:
         # t_spike < t
         sum_tau = np.array([spike[1]*np.exp(spike[0]/self.tau) for spike in spikes if spike[0] <= t], dtype=object).sum()
         sum_tau_s = np.array([spike[1]*np.exp(spike[0]/self.tau_s) for spike in spikes if spike[0] <= t], dtype=object).sum()
-        pdb.set_trace()
+
         factor_tau = np.exp(-t/self.tau)/self.tau
         factor_tau_s = np.exp(-t/self.tau_s)/self.tau_s
 
@@ -124,6 +124,7 @@ class Tempotron:
         """
         Compute the decayed contribution of the incoming spikes.
         """
+        # pdb.set_trace()
         # nr of synapses
         N_synapse = len(spike_times)
         # loop over spike times to compute the contributions
@@ -361,6 +362,7 @@ class Tempotron:
                 accurate += 1
 
         return (accurate / len(io_pairs)) * 100
+
     @staticmethod
     @jit(nopython=True)
     def K_jit(V_0, t, t_i, tau, tau_s):
@@ -374,7 +376,27 @@ class Tempotron:
         else:
             value = V_0 * (np.exp(-(t-t_i)/tau) - np.exp(-(t-t_i)/tau_s))
         return value
-    
+
+    @staticmethod
+    @jit(nopython=True)
+    def compute_spike_contributions_jit(t, spike_times, V_norm, K_jit):
+        """
+        Compute the decayed contribution of the incoming spikes.
+        
+        NOT IMPLEMENTED YET
+        """
+        raise NotImplementedError("compute_spike_contributions_jit")
+        
+        # nr of synapses
+        N_synapse = len(spike_times)
+        # loop over spike times to compute the contributions
+        # of individual spikes
+        spike_contribs = np.zeros(N_synapse)
+        for neuron_pos in range(N_synapse):
+            for spike_time in spike_times[neuron_pos]:
+                # print self.K(self.V_rest, t, spike_time)
+                spike_contribs[neuron_pos] += K_jit(V_norm, t, spike_time)
+        return spike_contribs
     
     
 if __name__ == '__main__':
@@ -382,7 +404,9 @@ if __name__ == '__main__':
     efficacies = 1.8 * np.random.random(10) - 0.50
     print('synaptic efficacies:', efficacies, '\n')
 
-    tempotron = Tempotron(0, 10, 2.5, efficacies, jit_mode=True)
+    tempotron = Tempotron(0, 10, 2.5, efficacies, jit_mode=False)
+    tempotron_jit = Tempotron(0, 10, 2.5, efficacies, jit_mode=True)
+    
 
     # efficacies = np.array([0.8, 0.8, 0.8, 0.8, 0.8])
     spike_times1 = np.array([[70, 200, 400], [], [400, 420], [], [110], [230], [240, 260, 340], [380], [300], [105]], dtype=object)
@@ -391,11 +415,12 @@ if __name__ == '__main__':
     print("Pre-training accuracy: " + 
           str(tempotron.accuracy(np.array([(spike_times1, True), (spike_times2, False)], dtype=object))))
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
-    tempotron.plot_membrane_potential(0, 500, spike_times1)
-
+    tempotron.plot_membrane_potential(0, 500, spike_times2)
+    """
     tempotron.train(np.array([(spike_times1, True), (spike_times2, False)], dtype=object), 300, learning_rate=10e-3)
     print("Post-training accuracy: " + 
           str(tempotron.accuracy(np.array([(spike_times1, True), (spike_times2, False)], dtype=object))))
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
-    tempotron.plot_membrane_potential(0, 500, spike_times1)
+    tempotron.plot_membrane_potential(0, 500, spike_times2)
     plt.show()
+    """

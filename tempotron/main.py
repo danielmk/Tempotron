@@ -16,7 +16,7 @@ class Tempotron:
     denoting the decay time constants of membrane integration
     and synaptic currents, respectively.
     """
-    def __init__(self, V_rest, tau, tau_s, synaptic_efficacies, threshold=1.0, jit_mode=False):
+    def __init__(self, V_rest, tau, tau_s, synaptic_efficacies, threshold=1.0, jit_mode=False, verbose=False):
         # set parameters as attributes
         self.V_rest = V_rest
         self.tau = float(tau)
@@ -26,6 +26,7 @@ class Tempotron:
         self.efficacies = synaptic_efficacies
         self.t_spi = 10     # spike integration time, compute this with formula
         self.jit_mode = jit_mode
+        self.verbose = verbose
 
         # compute normalisation factor V_0
         self.V_norm = self.compute_norm_factor(tau, tau_s)
@@ -150,9 +151,12 @@ class Tempotron:
         # no weight updates occur anymore
 
         for i in range(steps):
+            if self.verbose:
+                print(f"Current Epoch: {i}" )
             # go through io-pairs in random order
             for spike_times, target in np.random.permutation(io_pairs):
                 self.adapt_weights(spike_times, target, learning_rate)
+    
         return
 
     def get_membrane_potentials(self, t_start, t_end, spike_times, interval=0.1):
@@ -404,7 +408,7 @@ if __name__ == '__main__':
     efficacies = 1.8 * np.random.random(10) - 0.50
     print('synaptic efficacies:', efficacies, '\n')
 
-    tempotron = Tempotron(0, 10, 2.5, efficacies, jit_mode=False)
+    tempotron = Tempotron(0, 10, 2.5, efficacies, jit_mode=False, verbose=True)
     tempotron_jit = Tempotron(0, 10, 2.5, efficacies, jit_mode=True)
     
 
@@ -416,11 +420,10 @@ if __name__ == '__main__':
           str(tempotron.accuracy(np.array([(spike_times1, True), (spike_times2, False)], dtype=object))))
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
     tempotron.plot_membrane_potential(0, 500, spike_times2)
-    """
+
     tempotron.train(np.array([(spike_times1, True), (spike_times2, False)], dtype=object), 300, learning_rate=10e-3)
     print("Post-training accuracy: " + 
           str(tempotron.accuracy(np.array([(spike_times1, True), (spike_times2, False)], dtype=object))))
     # tempotron.plot_membrane_potential(0, 500, spike_times1)
     tempotron.plot_membrane_potential(0, 500, spike_times2)
     plt.show()
-    """

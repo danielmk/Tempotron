@@ -16,7 +16,7 @@ class Tempotron:
     denoting the decay time constants of membrane integration
     and synaptic currents, respectively.
     """
-    def __init__(self, V_rest, tau, tau_s, synaptic_efficacies, threshold=1.0, jit_mode=False, verbose=False):
+    def __init__(self, V_rest, tau, tau_s, synaptic_efficacies, t_max, threshold=1.0, jit_mode=False, verbose=False):
         # set parameters as attributes
         self.V_rest = V_rest
         self.tau = float(tau)
@@ -27,6 +27,7 @@ class Tempotron:
         self.t_spi = 10     # spike integration time, compute this with formula
         self.jit_mode = jit_mode
         self.verbose = verbose
+        self.t_max = t_max
 
         # compute normalisation factor V_0
         self.V_norm = self.compute_norm_factor(tau, tau_s)
@@ -45,10 +46,7 @@ class Tempotron:
         amplitudes are given by the synaptic efficacies.
         """
         tmax = (tau * tau_s * np.log(tau/tau_s)) / (tau - tau_s)
-        if self.jit_mode == True:
-            v_max = self.K_jit(1, tmax, 0, self.tau, self.tau_s)
-        else:
-            v_max = self.K(1, tmax, 0)
+        v_max = self.K(1, tmax, 0)
         V_0 = 1/v_max
         return V_0
 
@@ -118,14 +116,14 @@ class Tempotron:
         factor_tau_s = np.exp(-t/self.tau_s)/self.tau_s
 
         deriv = self.V_norm * (factor_tau_s*sum_tau_s - factor_tau*sum_tau)
-
+        
         return deriv
 
     def compute_spike_contributions(self, t, spike_times):
         """
         Compute the decayed contribution of the incoming spikes.
         """
-        # pdb.set_trace()
+
         # nr of synapses
         N_synapse = len(spike_times)
         # loop over spike times to compute the contributions
@@ -135,6 +133,7 @@ class Tempotron:
             for spike_time in spike_times[neuron_pos]:
                 # print self.K(self.V_rest, t, spike_time)
                 spike_contribs[neuron_pos] += self.K(self.V_norm, t, spike_time)
+        
         return spike_contribs
 
     def train(self, io_pairs, steps, learning_rate):
@@ -275,8 +274,13 @@ class Tempotron:
         times = np.array([spike[0] for spike in spikes])
         weights = np.array([spike[1] for spike in spikes])
         
-        sum_tau = (weights*np.exp(times/self.tau)).cumsum()
-        sum_tau_s = (weights*np.exp(times/self.tau_s)).cumsum()
+        sum_tau = (weights*np.exp(times/self.tau)).cumsum(dtype=np.longdouble)
+        sum_tau_s = (weights*np.exp(times/self.tau_s)).cumsum(dtype=np.longdouble)
+
+        # In case of overflow, calculate tmax by simulating the membrane voltage
+        if np.isnan(sum_tau).any() or np.isnan(sum_tau_s).any():
+            vm = self.get_membrane_potentials(0, self.t_max, spike_times)
+            return vm[0][vm[1].argmax()]
 
         # when an inhibitive spike is generated when the membrane potential
         # is still growing, the derivative does not exist in the maximum
@@ -292,7 +296,7 @@ class Tempotron:
         vmax_list = np.array([self.compute_membrane_potential(t, spike_times) for t in tmax_list])
 
         tmax = tmax_list[vmax_list.argmax()]
-        
+        # pdb.set_trace()
         return tmax
 
     def adapt_weights(self, spike_times, target, learning_rate):
@@ -381,35 +385,14 @@ class Tempotron:
             value = V_0 * (np.exp(-(t-t_i)/tau) - np.exp(-(t-t_i)/tau_s))
         return value
 
-    @staticmethod
-    @jit(nopython=True)
-    def compute_spike_contributions_jit(t, spike_times, V_norm, K_jit):
-        """
-        Compute the decayed contribution of the incoming spikes.
-        
-        NOT IMPLEMENTED YET
-        """
-        raise NotImplementedError("compute_spike_contributions_jit")
-        
-        # nr of synapses
-        N_synapse = len(spike_times)
-        # loop over spike times to compute the contributions
-        # of individual spikes
-        spike_contribs = np.zeros(N_synapse)
-        for neuron_pos in range(N_synapse):
-            for spike_time in spike_times[neuron_pos]:
-                # print self.K(self.V_rest, t, spike_time)
-                spike_contribs[neuron_pos] += K_jit(V_norm, t, spike_time)
-        return spike_contribs
-    
     
 if __name__ == '__main__':
     np.random.seed(0)
     efficacies = 1.8 * np.random.random(10) - 0.50
     print('synaptic efficacies:', efficacies, '\n')
 
-    tempotron = Tempotron(0, 10, 2.5, efficacies, jit_mode=False, verbose=True)
-    tempotron_jit = Tempotron(0, 10, 2.5, efficacies, jit_mode=True)
+    tempotron = Tempotron(0, 10, 2.5, efficacies, 2000, jit_mode=False, verbose=True)
+    # tempotron_jit = Tempotron(0, 10, 2.5, efficacies, jit_mode=True)
     
 
     # efficacies = np.array([0.8, 0.8, 0.8, 0.8, 0.8])

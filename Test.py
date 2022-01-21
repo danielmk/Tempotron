@@ -5,7 +5,7 @@ Unittesting for tempotron
 
 import unittest
 import numpy as np
-from Tempotron import Tempotron
+from tempotron.main import Tempotron
 
 
 class TestTempotron(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestTempotron(unittest.TestCase):
     """
     def setUp(self):
         # Change synaptic efficacies later!!
-        self.tempotron = Tempotron(0, 10, 2.5, np.ones(10))
+        self.tempotron = Tempotron(0, 10, 2.5, 500, np.ones(10))
         pass
 
     def test_normalisation_tempotron(self):
@@ -95,7 +95,7 @@ class TestTempotron(unittest.TestCase):
         Test for tempotron.compute_tmax
         Boundary case with non-existing derivative
         """
-        tempotron1 = Tempotron(0, 15, 15/4, np.array([2, -1]))
+        tempotron1 = Tempotron(0, 15, 15/4, np.array([2, -1]), 500)
         spike_times = np.array([[np.log(2)*15, 100], [np.log(3)*15, 101]], dtype=object)
 
         self.assertAlmostEqual(tempotron1.compute_tmax(spike_times), 16.47918433)

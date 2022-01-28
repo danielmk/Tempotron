@@ -274,8 +274,8 @@ class Tempotron:
         times = np.array([spike[0] for spike in spikes])
         weights = np.array([spike[1] for spike in spikes])
         
-        sum_tau = (weights*np.exp(times/self.tau)).cumsum(dtype=np.longdouble)
-        sum_tau_s = (weights*np.exp(times/self.tau_s)).cumsum(dtype=np.longdouble)
+        sum_tau = (weights*np.exp(times/self.tau)).cumsum()
+        sum_tau_s = (weights*np.exp(times/self.tau_s)).cumsum()
 
         # In case of overflow, calculate tmax by simulating the membrane voltage
         if np.isnan(sum_tau).any() or np.isnan(sum_tau_s).any():

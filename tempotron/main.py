@@ -16,7 +16,7 @@ class Tempotron:
     denoting the decay time constants of membrane integration
     and synaptic currents, respectively.
     """
-    def __init__(self, V_rest, tau, tau_s, synaptic_efficacies, t_max, threshold=1.0, jit_mode=False, verbose=False):
+    def __init__(self, V_rest, tau, tau_s, synaptic_efficacies, t_max, threshold=1.0, jit_mode=False, verbose=False, accuracy=False):
         # set parameters as attributes
         self.V_rest = V_rest
         self.tau = float(tau)
@@ -31,6 +31,7 @@ class Tempotron:
 
         # compute normalisation factor V_0
         self.V_norm = self.compute_norm_factor(tau, tau_s)
+        
 
     def compute_norm_factor(self, tau, tau_s):
         """
@@ -149,14 +150,20 @@ class Tempotron:
         # Run until maximum number of steps is reached or
         # no weight updates occur anymore
 
+        accuracy_list = []
+        n_pairs = len(io_pairs)
         for i in range(steps):
-            if self.verbose:
-                print(f"Current Epoch: {i}" )
-            # go through io-pairs in random order
+            # go through io-pairs in random orde
+            n_correct = 0
             for spike_times, target in np.random.permutation(io_pairs):
-                self.adapt_weights(spike_times, target, learning_rate)
-    
-        return
+                out = self.adapt_weights(spike_times, target, learning_rate)
+                n_correct += out
+            
+            accuracy = (n_correct / n_pairs) * 100
+            accuracy_list.append(accuracy)
+            if self.verbose:
+                print(f"Current Epoch: {i}. Accuracy: {accuracy}")
+        return accuracy_list
 
     def get_membrane_potentials(self, t_start, t_end, spike_times, interval=0.1):
         """
@@ -327,7 +334,7 @@ class Tempotron:
         # if target output is correct, don't adapt weights
         if (vmax >= self.threshold) == target:
             # print "no weight update necessary"
-            return
+            return 1
 
         # compute weight updates
         dw = self.dw(learning_rate, tmax, spike_times)
@@ -337,6 +344,8 @@ class Tempotron:
             self.efficacies += dw
         else:
             self.efficacies -= dw
+        
+        return 0
 
     def dw(self, learning_rate, tmax, spike_times):
         """

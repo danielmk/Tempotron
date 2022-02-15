@@ -151,19 +151,22 @@ class Tempotron:
         # no weight updates occur anymore
 
         accuracy_list = []
+        loss_list = []
         n_pairs = len(io_pairs)
         for i in range(steps):
             # go through io-pairs in random orde
             n_correct = 0
+            loss = 0
             for spike_times, target in np.random.permutation(io_pairs):
                 out = self.adapt_weights(spike_times, target, learning_rate)
-                n_correct += out
-            
+                n_correct += int(out == 0)  # Correct output is 0
+                loss += out
             accuracy = (n_correct / n_pairs) * 100
             accuracy_list.append(accuracy)
+            loss_list.append(loss)
             if self.verbose:
-                print(f"Current Epoch: {i}. Accuracy: {accuracy}")
-        return accuracy_list
+                print(f"Current Epoch: {i}. Accuracy: {accuracy}. Loss: {loss}")
+        return accuracy_list, loss_list
 
     def get_membrane_potentials(self, t_start, t_end, spike_times, interval=0.1):
         """
@@ -334,7 +337,7 @@ class Tempotron:
         # if target output is correct, don't adapt weights
         if (vmax >= self.threshold) == target:
             # print "no weight update necessary"
-            return 1
+            return 0
 
         # compute weight updates
         dw = self.dw(learning_rate, tmax, spike_times)
@@ -345,7 +348,7 @@ class Tempotron:
         else:
             self.efficacies -= dw
         
-        return 0
+        return np.abs(vmax - self.threshold)
 
     def dw(self, learning_rate, tmax, spike_times):
         """
